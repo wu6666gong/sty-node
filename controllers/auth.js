@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const User = require('../models/User.js')
 const errorResponse = require('../utils/errorResponse.js')
 const asyncHandler = require('../middlemare/async.js')
@@ -25,7 +26,7 @@ exports.login = asyncHandler(async(req, res, next) => {
   if(!user){
     return next(new errorResponse('参数有误', 401))
   }
-  const isMatch = user.matchPassword(password);
+  const isMatch = await user.matchPassword(password);
   if(!isMatch) {
     return next(new errorResponse('密码错误', 401))
   }
@@ -45,11 +46,60 @@ const sendTokenResponese = (user, statusCode, res) => {
   res.status(statusCode).cookie("token",token,options).json({success: true, token})
 }
 /** 
+ * @desc 更新个人信息
+ * @route PUT /api/v1/auth/updatedetails
+ * @access Private
+ */ 
+exports.updateDetails = asyncHandler(async(req, res, next) => {
+  const fieldsToUpdate = {
+    name: req.body.name,
+    email: req.body.email
+  }
+  const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {
+    new: true, 
+    runValidators: true
+  });
+  res.status(200).json({success:true, data: user})
+})
+/** 
+ * @desc 更新密码
+ * @route PUT /api/v1/auth/updatepassword
+ * @access Private
+ */ 
+exports.updatePassword= asyncHandler(async(req, res, next) => {
+  const user = await User.findById(req.user.id).select("+password");
+  // 判断旧密码和数据库密码是否一致
+  if(!(await user.matchPassword(req.body.currentPassword))){
+    return next(new errorResponse('密码错误', 401))
+  }
+  // 跟新密码
+  user.password = req.body.newPassword
+  await user.save();
+  sendTokenResponese(user, 200, res)
+})
+/** 
  * @desc 获取当前用户登陆信息
  * @route GET /api/v1/auth/me
  * @access 公共的
  */ 
 exports.getMe = asyncHandler(async(req, res, next) => {
   const user = await User.findById(req.user.id);
+  res.status(200).json({success:true, data: user})
+})
+/** 
+ * @desc 忘记密码
+ * @route POST /api/v1/auth/forgotpassword
+ * @access 公共的
+ */ 
+exports.forgotPassword = asyncHandler(async(req, res, next) => {
+  const user = await User.findOne({email: req.body.email});
+  if(!user) {
+    return next(new errorResponse('未找到该用户', 404))
+  }
+  // {{URL}}/api/v1/auth/resetpassword/
+  const resetToken =  user.getResetPasswordToken();
+  await user.save({
+    validateBeforeSave: false
+  })
   res.status(200).json({success:true, data: user})
 })

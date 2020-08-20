@@ -29,7 +29,18 @@ exports.getMscamp = asyncHandler(async (req, res, next) => {
     })
 })
 exports.updateMscamp = asyncHandler(async (req, res, next) => {
-  const mscamp = await Mscamp.findByIdAndUpdate(req.params.id, req.body, {
+  let mscamp = await Mscamp.findById(req.params.id);
+
+  //没有找到
+  if(!mscamp) {
+    return next(new errorResponse(`resource not ound with id of ${req.params.id}`))
+  }
+  //  确定id和登陆id是一致的
+  if(mscamp.user.toString() !== req.user.id &&  req.user.role !== 'admin') {
+    return next(new errorResponse(`该用户 ${req.params.id}无权限更新此数据`, 401))
+  }
+
+  mscamp = await Mscamp.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true
   })
@@ -45,6 +56,10 @@ exports.deleteMscamp = asyncHandler(async(req, res, next) => {
     const mscamp = await Mscamp.findById(req.params.id)
     if(!mscamp){
       return next(new errorResponse(`Resource not found width id if ${req.params.id}`, 400))
+    }
+      //  确定id和登陆id是一致的
+    if(mscamp.user.toString() !== req.user.id &&  req.user.role !== 'admin') {
+      return next(new errorResponse(`该用户 ${req.params.id}无权限删除此数据`, 401))
     }
     mscamp.remove()
     res.status(200).json({

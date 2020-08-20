@@ -50,9 +50,15 @@ exports.getCourse = asyncHandler(async (req, res, next) => {
  * @access private
  */ 
 exports.addCourse = asyncHandler(async (req, res, next) => {
+  req.body.mscamp = req.params.mscampId
+  req.body.user = req.user.id
   const  mscamp = await Mscamps.findById(req.params.mscampId)
   if(!mscamp) {
     return next(new errorResponse(`Resource not found width id if ${req.params.mscampId}`, 404))
+  }
+  //  确定id和登陆id是一致的
+  if(mscamp.user.toString() !== req.user.id &&  req.user.role !== 'admin') {
+      return next(new errorResponse(`该用户 ${req.user.id}无权限创建此数据`, 401))
   }
   const course = await Courses.create(req.body)
   res.status(200).json({
@@ -70,6 +76,11 @@ exports.updateCourse = asyncHandler(async(req, res, next) => {
   if(!course) {
     return next(new errorResponse(`Resource not found width id if ${req.params.id}`, 404))
   }
+  //  确定id和登陆id是一致的
+  if(course.user.toString() !== req.user.id &&  req.user.role !== 'admin') {
+    return next(new errorResponse(`该用户 ${req.user.id}无权限更新此课程数据`, 401))
+  }
+
   course = await Courses.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
     runValidators: true
@@ -88,6 +99,11 @@ exports.deleteCourse = asyncHandler(async (req, res, next) => {
   const course = await Courses.findById(req.params.id);
   if(!course) {
     return next(new errorResponse(`Resource not found width id if ${req.params.id}`, 404))
+  }
+
+  //  确定id和登陆id是一致的
+   if(course.user.toString() !== req.user.id &&  req.user.role !== 'admin') {
+    return next(new errorResponse(`该用户 ${req.user.id}无权限删除此课程数据`, 401))
   }
   await course.remove()
   res.status(200).json({
