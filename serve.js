@@ -3,7 +3,9 @@ const dotenv = require('dotenv')
 const cookieParser = require('cookie-parser')
 const mscamps = require('./routes/mscamps.js')
 const courses = require('./routes/courses.js')
-const users = require('./routes/users.js')
+const auth = require('./routes/auth.js')
+const users = require('./routes/users')
+const reviews = require('./routes/reviews')
 const mongoDB = require('./config/db.js')
 const errorHandler = require('./middlemare/error.js')
 // const logger = require('./middlemare/logger')
@@ -30,7 +32,9 @@ app.get('/', (req, res) => {
 
 app.use('/api/vi/mscamps', mscamps)
 app.use('/api/vi/courses', courses)
-app.use('/api/vi/auth', users)
+app.use('/api/vi/auth', auth)
+app.use('/api/vi/users', users)
+app.use('/api/vi/reviews', reviews)
 app.use(errorHandler)
 
 const PORT = process.env.PORT || 3000

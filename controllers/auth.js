@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const User = require('../models/User.js')
 const errorResponse = require('../utils/errorResponse.js')
 const asyncHandler = require('../middlemare/async.js')
+const sendeEmail = require("../utils/sendEmail")
 /** 
  * @desc 注册
  * @route PUT /api/v1/auth/register
@@ -98,8 +99,49 @@ exports.forgotPassword = asyncHandler(async(req, res, next) => {
   }
   // {{URL}}/api/v1/auth/resetpassword/
   const resetToken =  user.getResetPasswordToken();
+  const resetUrl = `${req.protocol}://${req.get("host")}/v1/auth/resetpassword/${resetToken}`
+  try{
+    await sendeEmail({
+      email: req.body.email,
+      subject: '重置密码',
+      message: resetUrl
+    }) 
+  }catch(error){
+  console.log(error, 'error')
+   user.resetPasswordToken=""
+   user.resetPasswordExpire=""
+   await user.save({
+    validateBeforeSave: false
+  })
+   return next(new errorResponse('发送邮箱错误', 500))
+  }
+  
   await user.save({
     validateBeforeSave: false
   })
   res.status(200).json({success:true, data: user})
+})
+/** 
+ * @desc 重置密码
+ * @route PUT /api/v1/auth/resetpassword/:resettoken
+ * @access 公共的
+ */ 
+exports.resetPwd = asyncHandler(async(req, res, next) => {
+  const resetPasswordToken = crypto.createHash("sha256").update(req.params.resettoken).digest("hex")
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpire: {
+      $gt: Date.now()
+    }
+  })
+  if(!user){
+    return next(new errorResponse('token不合法', 400))
+  }
+  user.password = req.body.password
+  user.resetPasswordExpire = undefined
+  user.resetPasswordExpire = undefined
+  await user.save({
+    validateBeforeSave: false
+  })
+  sendTokenResponese(user, 200, res)
 })

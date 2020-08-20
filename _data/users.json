@@ -1,21 +1,21 @@
 [
   {
     "_id": "5d7a514b5d2c12c7449be042",
-    "name": "超级管理员",
+    "name": "admin",
     "email": "admin@admin.com",
     "role": "admin",
     "password": "123456"
   },
   {
     "_id": "5d7a514b5d2c12c7449be043",
-    "name": "普通用户",
+    "name": "user",
     "email": "user@user.com",
     "role": "user",
     "password": "123456"
   },
   {
     "_id": "5d7a514b5d2c12c7449be044",
-    "name": "游客",
+    "name": "visitor",
     "email": "visitor@visitor.com",
     "role": "visitor",
     "password": "123456"
@@ -28,7 +28,7 @@
     "password": "123456"
   },
   {
-    "_id": "5d7a514b5d2c12c7449be045",
+    "_id": "5d7a514b5d2c12c7449be046",
     "name": "米斯特吴",
     "email": "misterwu@msu.com",
     "role": "visitor",
